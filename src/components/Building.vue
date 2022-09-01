@@ -55,8 +55,6 @@ const changeState = (newState) => {
         @change-state="changeState"
       />
     </div>
-    <div>{{ targetFloor }}</div>
-    <div>{{ queue }}</div>
   </div>
 </template>
 

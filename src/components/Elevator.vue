@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, watch } from "vue";
+import { reactive, ref, computed, watch } from "vue";
 
 const props = defineProps({
   numberOfFloors: Number,
@@ -14,6 +14,7 @@ const offsetTop = ref(0);
 const doorOffset = ref(0);
 const state = ref('idle');
 const currentFloor = ref(0);
+const direction = ref('');
 
 const shaftParams = {
   floorHeight: 120,
@@ -50,10 +51,12 @@ const handleFloor = (i) => {
 
   if (nextOffset > offsetTop.value) {
     moveElevator(elevatorDown, offset);
+    direction.value = '↓';
   }
 
   if (nextOffset < offsetTop.value) {
     moveElevator(elevatorUp, offset);
+    direction.value = '↑';
   }
 };
 
@@ -72,6 +75,7 @@ const moveElevator = (callback, offset) => {
 
       if (i === offset - 1) {
         changeState('waiting');
+        direction.value = '';
       }
 
       callback();
@@ -141,8 +145,10 @@ const closeDoors = () => {
         :style="`transform: translateX(${doorOffset}px)`"
         class="elevator-door"
       ></div>
+      <div class="display">
+        {{ direction }} {{ currentFloor + 1 }}
+      </div>
     </div>
-    <div>{{ currentFloor }}</div>
   </div>
 </template>
 
@@ -173,5 +179,24 @@ const closeDoors = () => {
   height: 100%;
 
   background-color: lightblue;
+}
+
+.display {
+  box-sizing: border-box;
+
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 30px;
+  width: 100%;
+
+  color: lightgreen;
+  border: 1px solid lightcoral;
+  background-color: black;
 }
 </style>
