@@ -1,19 +1,3 @@
-<template>
-  <div class="shaft">
-    <div :style="`top: ${offsetTop}px`" class="elevator">
-      <div
-        :style="`transform: translateX(-${doorOffset}px)`"
-        class="elevator-door"
-      ></div>
-      <div
-        :style="`transform: translateX(${doorOffset}px)`"
-        class="elevator-door"
-      ></div>
-    </div>
-    <div>{{ currentFloor }}</div>
-  </div>
-</template>
-
 <script setup>
 import { reactive, ref, watch } from "vue";
 
@@ -23,7 +7,7 @@ const props = defineProps({
   options: Object,
 })
 
-const emit = defineEmits(['change-floor']);
+const emit = defineEmits(['change-floor', 'change-state']);
 
 const elevatorQueue = reactive(props.queue);
 const offsetTop = ref(0);
@@ -31,16 +15,17 @@ const doorOffset = ref(0);
 const state = ref('idle');
 const currentFloor = ref(0);
 
-const elevatorParams = {
-  floorHeight: 80,
-  doorWidth: 25,
+const shaftParams = {
+  floorHeight: 120,
+  doorWidth: 40,
+  floorBorderWidth: 1,
 }
 
 const options = {
-  speed: Math.floor(props.options.speed / elevatorParams.floorHeight),
+  speed: Math.floor(props.options.speed / shaftParams.floorHeight),
   waiting: {
     total: props.options.waiting,
-    doorSpeed: Math.floor(props.options.doorSpeed / elevatorParams.doorWidth),
+    doorSpeed: Math.floor(props.options.doorSpeed / shaftParams.doorWidth),
     segments: Math.floor(props.options.waiting / props.options.doorSpeed),
   },
 }
@@ -53,14 +38,14 @@ watch(() => elevatorQueue.at(-1), (newVal) => {
 
 watch(() => offsetTop.value, (offset) => {
   for (let i = 0; i < props.numberOfFloors; i++) {
-    if (Math.floor(offset / elevatorParams.floorHeight) === i) {
+    if (Math.floor(offset / shaftParams.floorHeight) === i) {
       currentFloor.value = i;
     }
   }
 })
 
 const handleFloor = (i) => {
-  let nextOffset = i * elevatorParams.floorHeight;
+  let nextOffset = (i * shaftParams.floorHeight) + i + 1;
   let offset = Math.abs(nextOffset - offsetTop.value);
 
   if (nextOffset > offsetTop.value) {
@@ -74,7 +59,7 @@ const handleFloor = (i) => {
 
 const moveElevator = (callback, offset) => {
   if (offset === 0) {
-    state.value = 'waiting';
+    changeState('waiting');
     return;
   }
 
@@ -82,11 +67,11 @@ const moveElevator = (callback, offset) => {
     setTimeout(() => {
       if (i === 0) {
         emit('change-floor', elevatorQueue.shift());
-        state.value = 'moving';
+        changeState('moving');
       }
 
       if (i === offset - 1) {
-        state.value = 'waiting';
+        changeState('waiting');
       }
 
       callback();
@@ -95,18 +80,18 @@ const moveElevator = (callback, offset) => {
 };
 
 const waitingFloor = () => {
-  for (let i = 0; i < elevatorParams.doorWidth * options.waiting.segments; i++) {
-    if (i < elevatorParams.doorWidth) {
+  for (let i = 0; i < shaftParams.doorWidth * options.waiting.segments; i++) {
+    if (i < shaftParams.doorWidth) {
       setTimeout(openDoors, options.waiting.doorSpeed * i);
     }
 
-    if (i >= elevatorParams.doorWidth * (options.waiting.segments - 1)) {
+    if (i >= shaftParams.doorWidth * (options.waiting.segments - 1)) {
       setTimeout(closeDoors, options.waiting.doorSpeed * i);
     }
   }
 
   setTimeout(() => {
-    state.value = 'idle';
+    changeState('idle');
   }, options.waiting.total);
 };
 
@@ -122,6 +107,11 @@ watch(
     }
   }
 )
+
+const changeState = (newState) => {
+  state.value = newState;
+  emit('change-state', newState);
+}
 
 const elevatorUp = () => {
   offsetTop.value -= 1;
@@ -140,11 +130,28 @@ const closeDoors = () => {
 };
 </script>
 
+<template>
+  <div class="shaft">
+    <div :style="`top: ${offsetTop}px`" class="elevator">
+      <div
+        :style="`transform: translateX(-${doorOffset}px)`"
+        class="elevator-door"
+      ></div>
+      <div
+        :style="`transform: translateX(${doorOffset}px)`"
+        class="elevator-door"
+      ></div>
+    </div>
+    <div>{{ currentFloor }}</div>
+  </div>
+</template>
+
 <style scoped>
 .shaft {
-  position: absolute;
-  top: 0;
-  left: -100px;
+  position: relative;
+
+  width: 80px;
+  height: 100%;
 }
 
 .elevator {
@@ -155,16 +162,16 @@ const closeDoors = () => {
 
   display: flex;
 
-  width: 50px;
-  height: 80px;
+  width: 80px;
+  height: 120px;
 
-  border: red solid 2px;
+  border: lightcoral solid 1px;
 }
 
 .elevator-door {
-  width: 25px;
+  width: 40px;
   height: 100%;
 
-  background-color: red;
+  background-color: lightblue;
 }
 </style>

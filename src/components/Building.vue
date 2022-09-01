@@ -20,16 +20,25 @@ const toggleFloor = (i) => {
   }
 };
 
-const changeFloor = (level) => {
-  targetFloor.value = level;
+const changeFloor = (floor) => {
+  targetFloor.value = floor;
 };
+
+const changeState = (newState) => {
+  state.value = newState;
+}
 </script>
 
 <template>
   <div class="building">
-    <ul class="levels">
-      <li v-for="(i, index) in numberOfFloors" :key="index" class="level">
+    <ul class="floors">
+      <li v-for="(i, index) in numberOfFloors" :key="index" class="floor">
         <button
+          class="button"
+          :class="{
+            'button--processing': queue.includes(i - 1),
+            'button--current': targetFloor === i - 1 && state !== 'idle',
+          }"
           :disabled="queue.includes(i - 1) || targetFloor === i - 1"
           @click="toggleFloor(i - 1)"
         >
@@ -37,12 +46,15 @@ const changeFloor = (level) => {
         </button>
       </li>
     </ul>
-    <Elevator
-      :number-of-floors="numberOfFloors"
-      :options="elevatorOptions"
-      :queue="queue"
-      @change-floor="changeFloor"
-    />
+    <div class="elevators">
+      <Elevator
+        :number-of-floors="numberOfFloors"
+        :options="elevatorOptions"
+        :queue="queue"
+        @change-floor="changeFloor"
+        @change-state="changeState"
+      />
+    </div>
     <div>{{ targetFloor }}</div>
     <div>{{ queue }}</div>
   </div>
@@ -52,32 +64,85 @@ const changeFloor = (level) => {
 <style lang="scss" scoped>
 .building {
   position: relative;
-}
-
-.level {
-  height: 80px;
-
-  background-color: lime;
-}
-
-.elevator {
-  position: absolute;
-  overflow: hidden;
-  top: 0;
-  left: 0;
 
   display: flex;
-
-  width: 50px;
-  height: 80px;
-
-  border: red solid 2px;
 }
 
-.elevator-door {
-  width: 25px;
-  height: 100%;
+.floors {
+  min-width: 600px;
+  margin: 0;
+  padding: 0;
 
-  background-color: red;
+  list-style-type: none;
+
+  border: 2px solid gray;
+}
+
+.floor {
+  position: relative;
+
+  height: 120px;
+
+  border-bottom: 1px solid black;
+}
+
+.floor:last-child {
+  border-bottom: 0;
+}
+
+.elevators {
+  display: flex;
+}
+
+.button {
+  font-weight: 700;
+
+  position: absolute;
+  top: 20px;
+  right: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 25px;
+  height: 25px;
+
+  cursor: pointer;
+
+  border: 2px solid gray;
+  border-radius: 50%;
+  background-color: transparent;
+}
+
+.button:disabled {
+  color: inherit;
+}
+
+.button:disabled:active {
+  border-color: red;
+}
+
+.button--processing {
+  border-color: orange;
+}
+
+.button--current {
+  animation: color-animate 0.5s infinite;
+  border-color: cornflowerblue;
+}
+
+@keyframes color-animate {
+  0% {
+    border-color: cornflowerblue;
+  }
+
+  50% {
+    border-color: orange;
+  }
+
+  100% {
+    border-color: cornflowerblue;
+  }
 }
 </style>

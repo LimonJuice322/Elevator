@@ -17,7 +17,6 @@ export default {
 
 <style lang="scss">
 .app {
-  width: 600px;
   margin: 50px auto 0 auto;
 }
 </style>
