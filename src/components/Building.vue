@@ -1,137 +1,50 @@
 <script setup>
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive } from 'vue';
 import Elevator from '@/components/Elevator.vue';
 
 const queue = reactive([]);
-const currentLevel = ref(0);
-const offsetTop = ref(0);
-const doorWidth = ref(0);
+const targetFloor = ref(0);
 const state = ref('idle');
 
-const toggleLevel = (i) => {
-  if (!queue?.includes(i) && i !== currentLevel.value) {
+const elevatorOptions = {
+  doorSpeed: 1000,
+  waiting: 3000,
+  speed: 1000,
+};
+
+const numberOfFloors = 5;
+
+const toggleFloor = (i) => {
+  if (!queue?.includes(i) && targetFloor.value !== i) {
     queue?.push(i);
   }
-
-  if (state.value === "idle") {
-    handleLevel(i);
-  }
 };
 
-const handleLevel = (i) => {
-  let nextLevel = i * 80;
-  let offset = Math.abs(nextLevel - offsetTop.value);
-
-  if (nextLevel > offsetTop.value) {
-    moveElevator(elevatorDown, offset);
-  }
-
-  if (nextLevel < offsetTop.value) {
-    moveElevator(elevatorUp, offset);
-  }
-
-  if (nextLevel === offsetTop.value) {
-    moveElevator(() => {}, 0);
-  }
-};
-
-const moveElevator = (callback, offset) => {
-  if (offset === 0) {
-    state.value = "waiting";
-    return;
-  }
-
-  for (let i = 0; i < offset; i++) {
-    setTimeout(() => {
-      if (i === 0) {
-        currentLevel.value = queue.shift();
-        state.value = "moving";
-      }
-
-      if (i === offset - 1) {
-        state.value = "waiting";
-      }
-
-      callback();
-    }, 12.5 * i);
-  }
-};
-
-const waitingLevel = () => {
-  for (let i = 0; i < 75; i++) {
-    if (i < 25) {
-      setTimeout(openDoors, 40 * i);
-    }
-
-    if (i >= 50) {
-      setTimeout(closeDoors, 40 * i);
-    }
-  }
-
-  setTimeout(() => {
-    state.value = "idle";
-  }, 3000);
-};
-
-watch(
-  () => state.value,
-  (newState) => {
-    if (newState === "idle") {
-      handleLevel(queue[0]);
-    }
-
-    if (newState === "waiting") {
-      waitingLevel();
-    }
-  }
-)
-
-const elevatorUp = () => {
-  offsetTop.value -= 1;
-};
-
-const elevatorDown = () => {
-  offsetTop.value += 1;
-};
-
-const openDoors = () => {
-  doorWidth.value += 1;
-};
-
-const closeDoors = () => {
-  doorWidth.value -= 1;
+const changeFloor = (level) => {
+  targetFloor.value = level;
 };
 </script>
 
 <template>
   <div class="building">
     <ul class="levels">
-      <li v-for="(i, index) in 5" :key="index" class="level">
+      <li v-for="(i, index) in numberOfFloors" :key="index" class="level">
         <button
-          :disabled="
-            queue.includes(i - 1) ||
-            (currentLevel === i - 1 && ['waiting', 'moving'].includes(state))
-          "
-          @click="toggleLevel(i - 1)"
+          :disabled="queue.includes(i - 1) || targetFloor === i - 1"
+          @click="toggleFloor(i - 1)"
         >
           {{ i }}
         </button>
       </li>
     </ul>
-    <div :style="`top: ${offsetTop}px`" class="elevator">
-      <div
-        :style="`transform: translateX(-${doorWidth}px)`"
-        class="elevator-door"
-      ></div>
-      <div
-        :style="`transform: translateX(${doorWidth}px)`"
-        class="elevator-door"
-      ></div>
-    </div>
-    <Elevator :queue="queue" />
-    <div>{{ currentLevel }}</div>
+    <Elevator
+      :number-of-floors="numberOfFloors"
+      :options="elevatorOptions"
+      :queue="queue"
+      @change-floor="changeFloor"
+    />
+    <div>{{ targetFloor }}</div>
     <div>{{ queue }}</div>
-    <div>{{ state }}</div>
   </div>
 </template>
 
